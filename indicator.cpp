@@ -472,7 +472,8 @@ public:
             int len = cmf_lengths[i];
             std::cout << "⚙️  [" << i + 1 << "/" << cmf_lengths.size() << "] CMF Length=" << len << "..." << std::flush;
             Vector cmf_array = calculate_cmf(market_data_.high, market_data_.low, market_data_.close, market_data_.volume, len);
-            group.createDataSet("length_" + std::to_string(len), cmf_array);
+            std::vector<double> cmf_vec(cmf_array.data(), cmf_array.data() + cmf_array.size());
+            group.createDataSet("length_" + std::to_string(len), cmf_vec);
             std::cout << " ✓" << std::endl;
         }
 
@@ -542,7 +543,8 @@ public:
             for(size_t j=0; j<channels.size(); ++j) {
                 combo_id += std::to_string(channels[j]) + (j == channels.size()-1 ? "" : "_");
             }
-            group.createDataSet(combo_id, channel_scores);
+            std::vector<double> channel_vec(channel_scores.data(), channel_scores.data() + channel_scores.size());
+            group.createDataSet(combo_id, channel_vec);
         }
         
         file.createAttribute<size_t>("num_combinations", all_channel_combos.size());
@@ -656,14 +658,17 @@ WorkerResult process_single_test_ultra_fast(const Task& task, const std::shared_
     
     try {
         // Her worker kendi dosya tanıtıcısını açar
-        HighFive::File channel_file(CHANNEL_COMBOS_FILE, HighFive::File::ReadOnly);
-        HighFive::File cmf_file(CMF_CACHE_FILE, HighFive::File::ReadOnly);
+    HighFive::File channel_file(CHANNEL_COMBOS_FILE, HighFive::File::ReadOnly);
+    HighFive::File cmf_file(CMF_CACHE_FILE, HighFive::File::ReadOnly);
 
-        Vector channel_scores;
-        channel_file.getDataSet("channel_combinations/" + task.combo_id).read(channel_scores);
-        
-        Vector cmf_values;
-        cmf_file.getDataSet("cmf_values/length_" + std::to_string(task.cmf_len)).read(cmf_values);
+    // Read into std::vector<double> then map to Eigen::VectorXd to avoid HighFive/Eigen copy constraints
+    std::vector<double> channel_vec;
+    channel_file.getDataSet("channel_combinations/" + task.combo_id).read(channel_vec);
+    Vector channel_scores = Eigen::Map<Vector>(channel_vec.data(), channel_vec.size());
+
+    std::vector<double> cmf_vec;
+    cmf_file.getDataSet("cmf_values/length_" + std::to_string(task.cmf_len)).read(cmf_vec);
+    Vector cmf_values = Eigen::Map<Vector>(cmf_vec.data(), cmf_vec.size());
         
         const auto& prices = shared_data->prices;
 
@@ -715,6 +720,7 @@ WorkerResult process_single_test_ultra_fast(const Task& task, const std::shared_
 // ... CSVBatchWriter ve ana optimizasyon döngüsü (çok uzun olduğu için ana fonksiyona entegre)
 
 // ==================== MAIN ====================
+#ifndef INDICATOR_NO_MAIN
 int main(int argc, char* argv[]) {
     cxxopts::Options options(argv[0], "Ultra-Fast CMF Optimizer - C++ Version");
     options.add_options()
@@ -902,3 +908,4 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+#endif // INDICATOR_NO_MAIN

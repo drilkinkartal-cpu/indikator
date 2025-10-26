@@ -1,0 +1,21 @@
+nohup: ignoring input
+
+======================================================================
+📊 CMF ÖN-HESAPLAMA (PARALEL)
+======================================================================
+HDF5-DIAG: Error detected in HDF5 (1.10.10) thread 1:
+  #000: ../../../src/H5F.c line 349 in H5Fcreate(): unable to create file
+    major: File accessibility
+    minor: Unable to open file
+  #001: ../../../src/H5Fint.c line 1669 in H5F_open(): unable to open file: time = Sun Oct 26 19:28:42 2025
+, name = 'precomputed_data/cmf_cache.h5', tent_flags = 13
+    major: File accessibility
+    minor: Unable to open file
+  #002: ../../../src/H5FD.c line 722 in H5FD_open(): open failed
+    major: Virtual File Layer
+    minor: Unable to initialize object
+  #003: ../../../src/H5FDsec2.c line 351 in H5FD__sec2_open(): unable to open file: name = 'precomputed_data/cmf_cache.h5', errno = 2, error message = 'No such file or directory', flags = 13, o_flags = 242
+    major: File accessibility
+    minor: Unable to open file
+terminate called after throwing an instance of 'HighFive::FileException'
+  what():  Failed to create file precomputed_data/cmf_cache.h5 (File accessibility) Unable to open file
